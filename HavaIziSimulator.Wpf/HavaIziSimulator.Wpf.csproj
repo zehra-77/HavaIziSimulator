@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>HavaIziSimulator.Wpf</RootNamespace>
+    <AssemblyName>HavaIziSimulator.Wpf</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <ApplicationIcon></ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HavaIziSimulator.Core\HavaIziSimulator.Core.csproj" />
+    <ProjectReference Include="..\HavaIziSimulator.McpServer\HavaIziSimulator.McpServer.csproj"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="CopyRadarMcpServer" AfterTargets="Build">
+    <ItemGroup>
+      <RadarMcpFiles Include="..\HavaIziSimulator.McpServer\bin\$(Configuration)\net8.0\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RadarMcpFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

@@ -1,0 +1,679 @@
+<Window x:Class="HavaIziSimulator.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HavaIziSimulator.Wpf"
+        Title="Hava İzi Sensör Simülatörü — ICD-HIS-001 Rev 1.1"
+        Height="900"
+        Width="1520"
+        MinHeight="760"
+        MinWidth="1180"
+        Background="{DynamicResource ArkaPlanKoyu}"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <local:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <local:InverseBoolConverter x:Key="InverseBool"/>
+
+        <Style x:Key="SeciliIzKontrolu"
+               TargetType="ComboBox"
+               BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SeciliIz}" Value="{x:Null}">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SeciliIzMetinKontrolu"
+               TargetType="TextBox"
+               BasedOn="{StaticResource {x:Type TextBox}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SeciliIz}" Value="{x:Null}">
+                    <Setter Property="IsEnabled" Value="False"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="24"
+      Background="{DynamicResource ArkaPlanKoyu}">
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Her sekmede görünür kalan üst bilgi -->
+        <Border Grid.Row="0"
+                                            Background="{DynamicResource PanelArkaPlan}"
+                                            BorderBrush="{DynamicResource PanelKenarlik}"
+                                            BorderThickness="1"
+                                            CornerRadius="14"
+                                            Padding="20,16"
+                                            Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Hava İzi Sensör Simülatörü"
+                           FontSize="25" FontWeight="Bold"/>
+                    <TextBlock Text="ICD-HIS-001 Rev 1.1 · UDP Yayıncı"
+                           FontSize="13"
+                           Foreground="{DynamicResource MetinSoluk}"
+                           Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Button x:Name="TemaDegistirButonu"
+                                                Grid.Column="1"
+                                                Content="☾ Gece Modu"
+                                                Style="{StaticResource IkincilButon}"
+                                                Width="132"
+                                                Margin="0,0,12,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip="Açık ve gece teması arasında geçiş yap"
+                                                Click="TemaDegistir_Click"/>
+
+                <Border Grid.Column="2"
+                    Background="{DynamicResource PanelIkincil}"
+                    BorderBrush="{DynamicResource PanelKenarlik}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="18,10"
+                    VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel Margin="0,0,28,0">
+                            <TextBlock Text="Bağlantı" Style="{StaticResource BaslikMetni}"/>
+                            <TextBlock Text="{Binding BaglantiDurumu}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Gönderilen Mesaj" Style="{StaticResource BaslikMetni}"/>
+                            <TextBlock Text="{Binding GonderilenMesajSayisi}"
+                                   FontWeight="Bold" FontSize="18"
+                                   Foreground="{DynamicResource VurguMavi}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Her sekmede görünür kalan bağlantı ayarları -->
+        <GroupBox Grid.Row="1"
+                  Header="Bağlantı ve Yayın Ayarları"
+                  Margin="0,0,0,18">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                    <TextBlock Text="Hedef IP" Style="{StaticResource BaslikMetni}"/>
+                    <TextBox Text="{Binding HedefIp, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding Baglandi, Converter={StaticResource InverseBool}}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                    <TextBlock Text="Port" Style="{StaticResource BaslikMetni}"/>
+                    <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding Baglandi, Converter={StaticResource InverseBool}}"/>
+                </StackPanel>
+
+                <CheckBox Grid.Column="2"
+                          Content="Broadcast Modu"
+                          IsChecked="{Binding BroadcastModu}"
+                          IsEnabled="{Binding Baglandi, Converter={StaticResource InverseBool}}"
+                          Margin="0,20,22,0"
+                          VerticalAlignment="Center"/>
+
+                <Button Grid.Column="3"
+                        Content="Bağlan"
+                        Style="{StaticResource BasariButonu}"
+                        Width="120" Margin="0,20,10,0"
+                        Command="{Binding BaglanKomutu}"/>
+
+                <Button Grid.Column="4"
+                        Content="Bağlantıyı Kes"
+                        Style="{StaticResource TehlikeButonu}"
+                        Width="140" Margin="0,20,0,0"
+                        Command="{Binding BaglantiyiKesKomutu}"/>
+            </Grid>
+        </GroupBox>
+
+        <TabControl Grid.Row="2">
+
+            <!-- ==================================================== -->
+            <!-- 1. SEKME: Manuel ve otomatik iz yönetimi             -->
+            <!-- ==================================================== -->
+            <TabItem Header="İz Yönetimi">
+                <Grid Margin="16"
+          Background="{DynamicResource ArkaPlanKoyu}">
+                    
+                    <Grid.ColumnDefinitions>
+                        <!-- Sol: Yeni iz ve genel eylemler -->
+                        <ColumnDefinition Width="310"/>
+
+                        <ColumnDefinition Width="18"/>
+
+                        <!-- Orta: Aktif iz tablosu -->
+                        <ColumnDefinition Width="*"/>
+
+                        <ColumnDefinition Width="18"/>
+
+                        <!-- Sağ: Seçili iz işlemleri -->
+                        <ColumnDefinition Width="410"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <GroupBox Header="Yeni İz Oluştur (TRACK_CREATED)"
+                                      Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Track ID (boş = rastgele, 1–10000)"
+                                               Style="{StaticResource BaslikMetni}"/>
+                                    <TextBox Text="{Binding YeniTrackIdMetni, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,10"/>
+                                    <Button Content="Yeni İz Oluştur"
+                                            Style="{StaticResource BasariButonu}"
+                                            Command="{Binding YeniIzOlusturKomutu}"/>
+                                </StackPanel>
+                            </GroupBox>
+
+
+                            <GroupBox Header="Genel Eylemler">
+                                <StackPanel>
+                                    <Button Content="HEARTBEAT Gönder"
+                                            Style="{StaticResource EylemButonu}"
+                                            Command="{Binding HeartbeatGonderKomutu}"
+                                            Margin="0,0,0,12"/>
+                                    <Border Background="{DynamicResource PanelIkincil}"
+                                            BorderBrush="{DynamicResource PanelKenarlik}"
+                                            BorderThickness="1"
+                                            CornerRadius="7"
+                                            Padding="12">
+                                        <CheckBox Content="Otomatik Mod"
+                                                  IsChecked="{Binding OtomatikModAcik}"
+                                                  IsEnabled="{Binding LogEklemeCalisiyor, Converter={StaticResource InverseBool}}"
+                                                  Checked="OtomatikMod_Checked"
+                                                  Unchecked="OtomatikMod_Unchecked"/>
+                                    </Border>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- SAĞ: Seçili iz üzerinde hızlı işlem -->
+                    <ScrollViewer Grid.Column="4"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <GroupBox Header="Seçili İz Üzerinde İşlem"
+                                  Margin="0">
+                            <StackPanel>
+                                <Border Background="{DynamicResource PanelIkincil}"
+                                        BorderBrush="{DynamicResource PanelKenarlik}"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="12"
+                                        Margin="0,0,0,16">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Seçili Track ID"
+                                                   Style="{StaticResource BaslikMetni}"
+                                                   Margin="0,0,12,0"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SeciliIz.TrackId, FallbackValue='—', TargetNullValue='—'}"
+                                                   FontWeight="Bold"
+                                                   FontSize="17"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="İz Verileri"
+                                           Style="{StaticResource BaslikMetni}"/>
+
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
+                                        <TextBlock Text="Hız (kt)" Style="{StaticResource BaslikMetni}"/>
+                                        <TextBox Text="{Binding YeniHizMetni, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource SeciliIzMetinKontrolu}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
+                                        <TextBlock Text="Yükseklik (m)" Style="{StaticResource BaslikMetni}"/>
+                                        <TextBox Text="{Binding YeniYukseklikMetni, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource SeciliIzMetinKontrolu}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,10">
+                                        <TextBlock Text="Yönelim" Style="{StaticResource BaslikMetni}"/>
+                                        <ComboBox ItemsSource="{Binding YonelimSecenekleri}"
+                                                  SelectedItem="{Binding SeciliYonelim}"
+                                                  Style="{StaticResource SeciliIzKontrolu}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,10">
+                                        <TextBlock Text="Enlem" Style="{StaticResource BaslikMetni}"/>
+                                        <TextBox Text="{Binding YeniEnlemMetni, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource SeciliIzMetinKontrolu}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,10">
+                                        <TextBlock Text="Boylam" Style="{StaticResource BaslikMetni}"/>
+                                        <TextBox Text="{Binding YeniBoylamMetni, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource SeciliIzMetinKontrolu}"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Row="2" Grid.Column="2"
+                                            Content="İzi Güncelle"
+                                            VerticalAlignment="Bottom"
+                                            Margin="0,0,0,10"
+                                            Style="{StaticResource EylemButonu}"
+                                            Command="{Binding IziGuncelleKomutu}"/>
+                                </Grid>
+
+                                <Separator Margin="0,0,0,14"/>
+
+                                <TextBlock Text="Yeni Teşhis (IFF) — TESHIS_UPDATED"
+                                           Style="{StaticResource BaslikMetni}"/>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="92"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding TeshisSecenekleri}"
+                                              SelectedItem="{Binding SeciliYeniTeshis}"
+                                              Style="{StaticResource SeciliIzKontrolu}"/>
+                                    <Button Grid.Column="1"
+                                            Content="Gönder"
+                                            Margin="8,0,0,0"
+                                            Style="{StaticResource EylemButonu}"
+                                            Command="{Binding TeshisDegistirKomutu}"/>
+                                </Grid>
+
+                                <TextBlock Text="Yeni Tasnif — TASNIF_UPDATED"
+                                           Style="{StaticResource BaslikMetni}"/>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="92"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding TasnifSecenekleri}"
+                                              SelectedItem="{Binding SeciliYeniTasnif}"
+                                              Style="{StaticResource SeciliIzKontrolu}"/>
+                                    <Button Grid.Column="1"
+                                            Content="Gönder"
+                                            Margin="8,0,0,0"
+                                            Style="{StaticResource EylemButonu}"
+                                            Command="{Binding TasnifDegistirKomutu}"/>
+                                </Grid>
+
+                                <TextBlock Text="Düşme Nedeni — TRACK_DROPPED"
+                                           Style="{StaticResource BaslikMetni}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="92"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding DusmeNedeniSecenekleri}"
+                                              SelectedItem="{Binding SeciliDusmeNedeni}"
+                                              Style="{StaticResource SeciliIzKontrolu}"/>
+                                    <Button Grid.Column="1"
+                                            Content="İzi Düşür"
+                                            Margin="8,0,0,0"
+                                            Style="{StaticResource TehlikeButonu}"
+                                            Command="{Binding IziDusurKomutu}"/>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+                    </ScrollViewer>
+
+                    <GroupBox Grid.Column="2" Header="Aktif İzler">
+                        <DataGrid ItemsSource="{Binding AktifIzler}"
+                                  SelectedItem="{Binding SeciliIz}"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Track ID" Binding="{Binding TrackId}" Width="76"/>
+                                <DataGridTextColumn Header="Hız (kt)" Binding="{Binding SpeedKnots}" Width="82"/>
+                                <DataGridTextColumn Header="Yükseklik (m)" Binding="{Binding AltitudeMeters}" Width="108"/>
+                                <DataGridTextColumn Header="Yönelim" Binding="{Binding Yonelim}" Width="86"/>
+                                <DataGridTextColumn Header="Teşhis" Binding="{Binding Teshis}" Width="92"/>
+                                <DataGridTextColumn Header="Tasnif" Binding="{Binding Tasnif}" Width="100"/>
+                                <DataGridTextColumn Header="Enlem" Binding="{Binding Latitude, StringFormat=F6}" Width="108"/>
+                                <DataGridTextColumn Header="Boylam" Binding="{Binding Longitude, StringFormat=F6}" Width="108"/>
+                                <DataGridTextColumn Header="Son Güncelleme" Binding="{Binding SonGuncellemeYerel, StringFormat='HH:mm:ss'}" Width="116"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- ==================================================== -->
+            <!-- 2. SEKME: JSONL log dosyasından senaryo çalıştırma   -->
+            <!-- ==================================================== -->
+            <TabItem Header="Log Senaryo" Margin="0,0,5,0">
+                <Grid Margin="16"
+                      Background="{DynamicResource ArkaPlanKoyu}">
+                    
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="440"/>
+                        <ColumnDefinition Width="18"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <GroupBox Header="1 · Log Dosyasını Seç"
+                                  Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="LOG dosyasını seç."
+                                           Foreground="{DynamicResource MetinSoluk}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,10"/>
+
+                                <Border Background="{DynamicResource PanelIkincil}"
+                                        BorderBrush="{DynamicResource PanelKenarlik}"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="12"
+                                        MinHeight="58"
+                                        Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding LogDosyasiYolu, FallbackValue='Henüz dosya seçilmedi', TargetNullValue='Henüz dosya seçilmedi'}"
+                                               TextWrapping="Wrap"
+                                               ToolTip="{Binding LogDosyasiYolu}"/>
+                                </Border>
+
+                                <Button Content="Log Dosyası Seç"
+                                        Command="{Binding LogDosyasiSecKomutu}"
+                                        Style="{StaticResource IkincilButon}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="2 · Senaryoyu Çalıştır"
+                                  Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
+                                            Content="▶ Logu Çalıştır"
+                                            Height="42"
+                                            Command="{Binding LogEklemeBaslatKomutu}"
+                                            Style="{StaticResource BasariButonu}"/>
+
+                                    <Button Grid.Column="2"
+                                            Content="■ Durdur"
+                                            Height="42"
+                                            Command="{Binding LogEklemeDurdurKomutu}"
+                                            Style="{StaticResource TehlikeButonu}"/>
+                                </Grid>
+
+                                <Border Background="{DynamicResource PanelIkincil}"
+                                        BorderBrush="{DynamicResource PanelKenarlik}"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="14">
+                                    <StackPanel>
+                                        <TextBlock Text="İşlem Durumu"
+                                                   Style="{StaticResource BaslikMetni}"
+                                                   Margin="0,0,0,5"/>
+                                        <TextBlock Text="{Binding LogEklemeDurumu}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"/>
+
+                                        <ProgressBar Height="8"
+                                                     Margin="0,14,0,0"
+                                                     IsIndeterminate="True"
+                                                     Visibility="{Binding LogEklemeCalisiyor, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </GroupBox>
+
+
+                    </StackPanel>
+
+                    <GroupBox Grid.Column="2" Header=" Log İzleri">
+                        <DataGrid ItemsSource="{Binding LogReplayIzler}"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Track ID" Binding="{Binding TrackId}" Width="76"/>
+                                <DataGridTextColumn Header="Hız (kt)" Binding="{Binding SpeedKnots}" Width="82"/>
+                                <DataGridTextColumn Header="Yükseklik (m)" Binding="{Binding AltitudeMeters}" Width="108"/>
+                                <DataGridTextColumn Header="Yönelim" Binding="{Binding Yonelim}" Width="86"/>
+                                <DataGridTextColumn Header="Teşhis" Binding="{Binding Teshis}" Width="92"/>
+                                <DataGridTextColumn Header="Tasnif" Binding="{Binding Tasnif}" Width="100"/>
+                                <DataGridTextColumn Header="Enlem" Binding="{Binding Latitude, StringFormat=F6}" Width="108"/>
+                                <DataGridTextColumn Header="Boylam" Binding="{Binding Longitude, StringFormat=F6}" Width="108"/>
+                                <DataGridTextColumn Header="Son Güncelleme" Binding="{Binding SonGuncellemeYerel, StringFormat='HH:mm:ss'}" Width="116"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+
+
+                </Grid>
+            </TabItem>
+
+            <!-- ==================================================== -->
+            <!-- 3. SEKME: Aktif iz, geçmiş log ve radar AI asistanı  -->
+            <!-- ==================================================== -->
+            <TabItem Header="AI Asistan" Margin="0,0,5,0">
+                <Grid Margin="16" Background="{DynamicResource ArkaPlanKoyu}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="5*"/>
+                            <ColumnDefinition Width="18"/>
+                            <ColumnDefinition Width="7*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <GroupBox Grid.Column="0" Header="AI Asistan">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Text="{Binding AiBaglamBasligi}"
+                                           Foreground="{DynamicResource MetinSoluk}"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,10"/>
+
+                                <TextBox Grid.Row="1"
+                                         Text="{Binding SenaryoPrompt, UpdateSourceTrigger=PropertyChanged}"
+                                         MinHeight="190"
+                                         Padding="12"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top"
+                                         VerticalScrollBarVisibility="Auto"/>
+
+                               
+                                <Grid Grid.Row="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
+                                            Content="Log Dosyası Ekle"
+                                            Command="{Binding AiLogDosyasiSecKomutu}"
+                                            Style="{StaticResource IkincilButon}"
+                                            Visibility="{Binding AiAktifIzModu, Converter={StaticResource BoolToVis}}"/>
+
+                                    <Button Grid.Column="0"
+                                            Content="← Aktif İzlere Geri Dön"
+                                            Command="{Binding AiAktifIzlereDonKomutu}"
+                                            Style="{StaticResource IkincilButon}"
+                                            Visibility="{Binding AiLogModuAktif, Converter={StaticResource BoolToVis}}"/>
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding AiSeciliLogDosyasiMetni}"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource MetinSoluk}"
+                                               TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding AiLogModuAktif, Converter={StaticResource BoolToVis}}"/>
+
+                                    <Button Grid.Column="3"
+                                            Content="AI'ya Gönder"
+                                            Command="{Binding SenaryoOlusturVeGonderKomutu}"
+                                            Style="{StaticResource BasariButonu}"
+                                            Width="190"
+                                            Height="48"
+                                            HorizontalAlignment="Right"/>
+                                </Grid>
+
+                                <Border Grid.Row="4"
+                                        Background="{DynamicResource PanelIkincil}"
+                                        BorderBrush="{DynamicResource PanelKenarlik}"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="10"
+                                        Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Durum" Style="{StaticResource BaslikMetni}"/>
+                                        <TextBlock Text="{Binding SenaryoDurumu}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Grid.Column="2" Header="AI Cevabı">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBox Grid.Row="0"
+                                         Text="{Binding AiCevabi}"
+                                         IsReadOnly="True"
+                                         MinHeight="250"
+                                         Padding="14"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top"
+                                         VerticalScrollBarVisibility="Auto"/>
+
+                                <Expander Grid.Row="1"
+                                          Header="Teknik MCP işlemlerini göster"
+                                          IsExpanded="False"
+                                          Margin="0,12,0,0"
+                                          Visibility="{Binding AiAktifIzModu, Converter={StaticResource BoolToVis}}">
+                                    <TextBox Text="{Binding SenaryoJson}"
+                                             IsReadOnly="True"
+                                             Height="190"
+                                             Padding="10"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             FontFamily="Consolas"
+                                             FontSize="13"
+                                             VerticalScrollBarVisibility="Auto"/>
+                                </Expander>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- ==================================================== -->
+            <!-- 4. SEKME: Tam genişlik gönderim logları              -->
+            <!-- ==================================================== -->
+            <TabItem Header="Gönderim Logları">
+                <Grid Margin="16"
+                      Background="{DynamicResource ArkaPlanKoyu}">
+                    
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Gönderim Logları"
+                                       FontSize="20"
+                                       FontWeight="Bold"/>
+                            <TextBlock Text="Manuel, otomatik ve JSONL senaryosundan UDP ile gönderilen mesajlar"
+                                       Foreground="{DynamicResource MetinSoluk}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                Content="Ayrı Pencerede Aç"
+                                Width="160"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource EylemButonu}"
+                                Click="GonderimLogunuBuyut_Click"/>
+
+                        <Button Grid.Column="2"
+                                Content="Log'u Temizle"
+                                Width="130"
+                                Style="{StaticResource IkincilButon}"
+                                Command="{Binding LoglariTemizleKomutu}"/>
+                    </Grid>
+
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource PanelArkaPlan}"
+                            BorderBrush="{DynamicResource PanelKenarlik}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="8">
+                        <ListBox x:Name="GonderimLogListesi"
+                                 ItemsSource="{Binding Loglar}"
+                                 FontFamily="Consolas"
+                                 FontSize="13"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem"
+                                                                   BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="Padding" Value="8,5"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

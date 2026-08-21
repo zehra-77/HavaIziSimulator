@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>HavaIziSimulator</RootNamespace>
+		<AssemblyName>HavaIziSimulator.Core</AssemblyName>
+		<LangVersion>latest</LangVersion>
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!--
+		  Paket kaynakları contentFiles üzerinden zaten otomatik ekleniyor.
+		  Paketin build/HavaIzi.IcdLib.props dosyası aynı kaynakları ikinci kez
+		  eklediği için CS2002 uyarıları oluşuyordu; yalnızca build varlığını
+		  dışlayarak tek derleme girdisi bırakıyoruz.
+		-->
+		<PackageReference Include="HavaIzi.IcdLib"
+		                  Version="1.1.0"
+		                  PrivateAssets="all"
+		                  ExcludeAssets="build;buildTransitive" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<EmbeddedResource Include="Llm\Prompts\system-prompt.md" />
+	</ItemGroup>
+
+
+</Project>
